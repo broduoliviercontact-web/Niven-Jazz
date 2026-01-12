@@ -1,0 +1,16 @@
+{
+  "name": "niven-tapes-processor",
+  "version": "1.0.0",
+  "description": "Archive.org audio processor for Niven tapes collection",
+  "main": "src/cli.js",
+  "type": "module",
+  "scripts": {
+    "test": "node src/dev/louis.js"
+  },
+  "keywords": ["archive.org", "audio", "processing", "cassettes"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
