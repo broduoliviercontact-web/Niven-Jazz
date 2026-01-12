@@ -154,12 +154,21 @@ export async function splitIntoTracks(inputPath, outDir, options = {}) {
  * Process Side A and Side B with continuous track numbering
  * @param {Array} sideFiles - [sideAPath, sideBPath]
  * @param {string} outDir - Output directory
- * @param {object} options - Split options
+ * @param {object} options - Split options + cleanup options
  * @returns {Promise<Array>} - All track paths
  */
 export async function processSides(sideFiles, outDir, options = {}) {
   const allTracks = [];
   let currentIndex = 1;
+
+  const {
+    progressiveCleanup = false,
+    cleanupLevel = 'all',
+    trashDir = 'out/.trash',
+    identifier = '',
+    dryRun = false,
+    ...splitOptions
+  } = options;
 
   for (let i = 0; i < sideFiles.length; i++) {
     const sideName = i === 0 ? 'Side A' : 'Side B';
@@ -168,12 +177,31 @@ export async function processSides(sideFiles, outDir, options = {}) {
     console.log(`\n[process] === ${sideName} ===`);
 
     const result = await splitIntoTracks(sidePath, outDir, {
-      ...options,
+      ...splitOptions,
       startIndex: currentIndex
     });
 
     allTracks.push(...result.tracks);
     currentIndex = result.nextIndex;
+
+    // Progressive cleanup: delete raw file after successful split if enabled
+    if (progressiveCleanup && (cleanupLevel === 'raw' || cleanupLevel === 'all')) {
+      // Only cleanup if tracks were successfully created
+      if (result.tracks.length > 0) {
+        const { progressiveCleanup: cleanupFn } = await import('./cleanup.js');
+        const cleaned = await cleanupFn(sidePath, {
+          enabled: true,
+          trashDir,
+          identifier,
+          dryRun,
+          prerequisiteValid: result.tracks.length > 0
+        });
+
+        if (cleaned) {
+          console.log(`[cleanup] ✓ progressive cleanup: ${sideName} raw file moved to trash`);
+        }
+      }
+    }
   }
 
   return allTracks;

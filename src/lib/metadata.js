@@ -18,6 +18,36 @@ export async function getMetadata(identifier) {
 }
 
 /**
+ * Extract source/collection name from metadata
+ * @param {object} metadata - Full metadata object from Archive.org
+ * @returns {string|null} - Source name or null if not found
+ */
+export function extractSourceName(metadata) {
+  const meta = metadata.metadata || {};
+
+  // Try creator first (e.g., "Larry Niven")
+  if (meta.creator) {
+    const creator = Array.isArray(meta.creator) ? meta.creator[0] : meta.creator;
+    // Clean up the name: remove spaces, keep alphanumeric and underscores
+    return creator.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+  }
+
+  // Try collection as fallback
+  if (meta.collection) {
+    const collection = Array.isArray(meta.collection) ? meta.collection[0] : meta.collection;
+    return collection.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+  }
+
+  // Try uploader as last resort
+  if (meta.uploader) {
+    const uploader = Array.isArray(meta.uploader) ? meta.uploader[0] : meta.uploader;
+    return uploader.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+  }
+
+  return null;
+}
+
+/**
  * Check if file is a valid audio file
  * @param {object} file - File object from metadata
  * @returns {boolean}
